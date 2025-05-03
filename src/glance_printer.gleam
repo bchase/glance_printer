@@ -190,8 +190,14 @@ fn pretty_pattern(pattern: Pattern) -> Document {
     }
 
     // Pattern for pulling off the front end of a string
-    PatternConcatenate(left, right) -> {
-      [doc.from_string("\"" <> left <> "\" <> "), pretty_assignment_name(right)]
+    PatternConcatenate(prefix, prefix_name, rest_name) -> {
+      [
+        doc.from_string("\"" <> prefix <> "\" <> "),
+        prefix_name
+          |> option.map(pretty_assignment_name)
+          |> option.unwrap(or: doc.empty),
+        pretty_assignment_name(rest_name),
+      ]
       |> doc.concat
     }
 
