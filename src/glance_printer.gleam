@@ -13,9 +13,9 @@ import glance.{
   Int, IntOption, LabelledField, LabelledVariantField, Let, LetAssert, LittleOption,
   LtEqFloat, LtEqInt, LtFloat, LtInt, Module, MultFloat, MultInt, Named,
   NamedType, NativeOption, NegateBool, NegateInt, NotEq, Or, Panic,
-  PatternAssignment, PatternBitString, PatternConcatenate, PatternConstructor,
+  PatternAssignment, PatternBitString, PatternConcatenate,
   PatternDiscard, PatternFloat, PatternInt, PatternList, PatternString,
-  PatternTuple, PatternVariable, Pipe, Private, Public, RecordUpdate,
+  PatternTuple, PatternVariable, PatternVariant, Pipe, Private, Public, RecordUpdate,
   RecordUpdateField, RemainderInt, ShorthandField, SignedOption, SizeOption,
   SizeValueOption, String, SubFloat, SubInt, Todo, Tuple, TupleIndex, TupleType,
   TypeAlias, UnitOption, UnlabelledField, UnlabelledVariantField, UnsignedOption,
@@ -210,7 +210,7 @@ fn pretty_pattern(pattern: Pattern) -> Document {
 
     PatternBitString(segments) -> pretty_bitstring(segments, pretty_pattern)
 
-    PatternConstructor(module, constructor, arguments, with_spread) -> {
+    PatternVariant(module:, constructor:, arguments:, with_spread:) -> {
       let module =
         module
         |> option.map(doc.from_string)
