@@ -126,7 +126,7 @@ fn pretty_function_parameter(parameter: FunctionParameter) -> Document {
 fn pretty_statement(statement: Statement) -> Document {
   case statement {
     Expression(expression) -> pretty_expression(expression)
-    Assignment(kind, pattern, annotation, value) -> {
+    Assignment(kind:, pattern:, annotation:, value:, location: _) -> {
       let let_declaration = case kind {
         Let -> doc.from_string("let ")
         LetAssert(..) -> doc.from_string("let assert ")
@@ -141,7 +141,7 @@ fn pretty_statement(statement: Statement) -> Document {
       ]
       |> doc.concat
     }
-    Use(patterns, function) -> {
+    Use(patterns:, function:, location: _) -> {
       let patterns =
         patterns
         |> list.map(pretty_use_pattern)
@@ -155,7 +155,7 @@ fn pretty_statement(statement: Statement) -> Document {
       ]
       |> doc.concat
     }
-    Assert(expression:, message:) ->
+    Assert(expression:, message:, location: _) ->
       doc.zero_width_string("") // TODO
   }
 }
@@ -170,35 +170,35 @@ fn pretty_use_pattern(use_pattern: UsePattern) -> Document {
 fn pretty_pattern(pattern: Pattern) -> Document {
   case pattern {
     // Basic patterns
-    PatternInt(val) | PatternFloat(val) | PatternVariable(val) ->
-      doc.from_string(val)
+    PatternInt(value:, location: _) | PatternFloat(value:, location: _) | PatternVariable(name: value, location: _) ->
+      doc.from_string(value)
 
-    PatternString(val) -> doc.from_string("\"" <> val <> "\"")
+    PatternString(value:, location: _) -> doc.from_string("\"" <> value <> "\"")
 
     // A discarded value should start with an underscore
-    PatternDiscard(val) -> doc.from_string("_" <> val)
+    PatternDiscard(name:, location: _) -> doc.from_string("_" <> name)
 
     // A tuple pattern
-    PatternTuple(elements) ->
+    PatternTuple(elements:, location: _) ->
       elements
       |> list.map(pretty_pattern)
       |> pretty_tuple
 
     // A list pattern
-    PatternList(elements, tail) ->
+    PatternList(elements:, tail:, location: _) ->
       pretty_list(
         of: list.map(elements, pretty_pattern),
         with_tail: option.map(tail, pretty_pattern),
       )
 
     // Pattern for renaming something with "as"
-    PatternAssignment(pattern, name) -> {
+    PatternAssignment(attern: pattern, name:, location: _) -> {
       [pretty_pattern(pattern), pretty_as(Some(name))]
       |> doc.concat
     }
 
     // Pattern for pulling off the front end of a string
-    PatternConcatenate(prefix, prefix_name, rest_name) -> {
+    PatternConcatenate(prefix:, prefix_name:, rest_name:, location: _) -> {
       [
         doc.from_string("\"" <> prefix <> "\" <> "),
         prefix_name
@@ -209,9 +209,9 @@ fn pretty_pattern(pattern: Pattern) -> Document {
       |> doc.concat
     }
 
-    PatternBitString(segments) -> pretty_bitstring(segments, pretty_pattern)
+    PatternBitString(segments:, location: _) -> pretty_bitstring(segments, pretty_pattern)
 
-    PatternVariant(module:, constructor:, arguments:, with_spread:) -> {
+    PatternVariant(module:, constructor:, arguments:, with_spread:, location: _) -> {
       let module =
         module
         |> option.map(doc.from_string)
@@ -234,7 +234,7 @@ fn pretty_pattern(pattern: Pattern) -> Document {
 
 // Pretty print a constant
 fn pretty_constant(constant: Definition(Constant)) -> Document {
-  use Constant(name, publicity, annotation, value) <- pretty_definition(
+  use Constant(name:, publicity:, annotation:, value:, location: _) <- pretty_definition(
     constant,
   )
 
@@ -303,26 +303,26 @@ fn pretty_list(
 fn pretty_expression(expression: Expression) -> Document {
   case expression {
     // Int, Float and Variable simply print as their string value
-    Int(str) | Float(str) | Variable(str) -> doc.from_string(str)
+    Int(value:, location: _) | Float(value:, location: _) | Variable(name: value, location: _) -> doc.from_string(value)
 
     // A string literal needs to bee wrapped in quotes
-    String(val) -> doc.from_string("\"" <> val <> "\"")
+    String(value:, location: _) -> doc.from_string("\"" <> value <> "\"")
 
     // Negate int gets a - in front
-    NegateInt(expr) ->
+    NegateInt(value: expr, location: _) ->
       [doc.from_string("-"), pretty_expression(expr)]
       |> doc.concat
 
     // Negate bool gets a ! in front
-    NegateBool(expr) ->
+    NegateBool(value: expr, location: _) ->
       [doc.from_string("!"), pretty_expression(expr)]
       |> doc.concat
 
     // A block of statements
-    Block(statements) -> pretty_block(of: statements)
+    Block(statements:, location: _) -> pretty_block(of: statements)
 
     // Pretty print a panic
-    Panic(msg) -> {
+    Panic(message: msg, location: _) -> {
       case msg {
         Some(expr) ->
           doc.concat([doc.from_string("panic as "), pretty_expression(expr)])
@@ -331,7 +331,7 @@ fn pretty_expression(expression: Expression) -> Document {
     }
 
     // Pretty print a todo
-    Todo(msg) -> {
+    Todo(message: msg, location: _) -> {
       case msg {
         Some(expr) ->
           doc.concat([doc.from_string("todo as "), pretty_expression(expr)])
@@ -340,23 +340,23 @@ fn pretty_expression(expression: Expression) -> Document {
     }
 
     // Pretty print a tuple
-    Tuple(expressions) ->
+    Tuple(elements: expressions, location: _) ->
       expressions
       |> list.map(pretty_expression)
       |> pretty_tuple
 
     // Pretty print a list
-    glance.List(elements, rest) ->
+    glance.List(elements:, rest:, location: _) ->
       pretty_list(
         list.map(elements, pretty_expression),
         option.map(rest, pretty_expression),
       )
 
     // Pretty print a function
-    Fn(arguments, return, body) -> pretty_fn(arguments, return, body)
+    Fn(arguments:, return_annotation: return, body:, location: _) -> pretty_fn(arguments, return, body)
 
     // Pretty print a record update expression
-    RecordUpdate(module, constructor, record, fields) -> {
+    RecordUpdate(module:, constructor:, record:, fields:, location: _) -> {
       let module = case module {
         Some(str) -> doc.from_string(str)
         None -> doc.empty
@@ -384,12 +384,12 @@ fn pretty_expression(expression: Expression) -> Document {
       |> doc.concat
     }
 
-    FieldAccess(container, label) -> {
+    FieldAccess(container:, label:, location: _) -> {
       [pretty_expression(container), doc.from_string("." <> label)]
       |> doc.concat
     }
 
-    Call(function, arguments) -> {
+    Call(function:, arguments:, location: _) -> {
       let arguments =
         arguments
         |> list.map(pretty_field(_, pretty_expression))
@@ -398,12 +398,12 @@ fn pretty_expression(expression: Expression) -> Document {
       |> doc.concat
     }
 
-    TupleIndex(tuple, index) -> {
+    TupleIndex(tuple:, index:, location: _) -> {
       [pretty_expression(tuple), doc.from_string("." <> int.to_string(index))]
       |> doc.concat
     }
 
-    FnCapture(label, function, arguments_before, arguments_after) -> {
+    FnCapture(label:, function:, arguments_before:, arguments_after:, location: _) -> {
       let arguments_before =
         list.map(arguments_before, pretty_field(_, pretty_expression))
       let arguments_after =
@@ -421,8 +421,8 @@ fn pretty_expression(expression: Expression) -> Document {
       [pretty_expression(function), in_parens]
       |> doc.concat
     }
-    BitString(segments) -> pretty_bitstring(segments, pretty_expression)
-    Case(subjects, clauses) -> {
+    BitString(segments:, location: _) -> pretty_bitstring(segments, pretty_expression)
+    Case(subjects:, clauses:, location: _) -> {
       let subjects =
         subjects
         |> list.map(pretty_expression)
@@ -461,7 +461,7 @@ fn pretty_expression(expression: Expression) -> Document {
       |> nest
       |> doc.append_docs([doc.line, doc.from_string("}")])
     }
-    BinaryOperator(name, left, right) -> {
+    BinaryOperator(name:, left:, right:, location: _) -> {
       [
         pretty_expression(left),
         nbsp(),
@@ -472,7 +472,7 @@ fn pretty_expression(expression: Expression) -> Document {
       |> doc.concat
     }
 
-    Echo(expression:) ->
+    Echo(expression:, location: _) ->
       todo
   }
 }
