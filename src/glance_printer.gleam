@@ -155,15 +155,37 @@ fn pretty_statement(statement: Statement) -> Document {
       ]
       |> doc.concat
     }
-    Assert(expression:, message:, location: _) ->
-      doc.zero_width_string("") // TODO
+    Assert(expression:, message:, location: _) -> {
+      case message {
+        Some(message) ->
+          [
+            doc.from_string("assert "),
+            pretty_expression(expression),
+            doc.from_string(" as "),
+            pretty_expression(message),
+          ]
+          |> doc.concat
+
+        None ->
+          [
+            doc.from_string("assert "),
+            pretty_expression(expression),
+          ]
+          |> doc.concat
+      }
+    }
   }
 }
 
 /// Pretty print a "use pattern" (anything that could go in a `use` pattern match branch)
 fn pretty_use_pattern(use_pattern: UsePattern) -> Document {
-  let UsePattern(pattern:, annotation: _) = use_pattern // TODO `annotation`
-  pretty_pattern(pattern)
+  let UsePattern(pattern:, annotation:) = use_pattern
+
+  [
+    pretty_pattern(pattern),
+    pretty_type_annotation(annotation), // TODO test?
+  ]
+  |> doc.concat
 }
 
 /// Pretty print a "pattern" (anything that could go in a pattern match branch)
@@ -471,9 +493,17 @@ fn pretty_expression(expression: Expression) -> Document {
       ]
       |> doc.concat
     }
-
-    Echo(expression:, location: _) ->
-      todo
+    Echo(expression:, location: _) -> { // TODO test
+      case expression {
+        None -> doc.from_string("echo")
+        Some(expression) ->
+          [
+            doc.from_string("echo"),
+            pretty_expression(expression),
+          ]
+          |> doc.concat
+      }
+    }
   }
 }
 
@@ -719,7 +749,7 @@ fn pretty_variant(variant: Variant) -> Document {
   //   UnlabelledVariantField(item: Type)
   // }
 
-  let Variant(name:, fields:, ..) = variant // TODO `attributes`
+  let Variant(name:, fields:, attributes: _) = variant // TODO `attributes`
   fields
   |> list.map(fn(field) {
     case field {
