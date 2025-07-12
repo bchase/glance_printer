@@ -156,13 +156,14 @@ fn pretty_statement(statement: Statement) -> Document {
       |> doc.concat
     }
     Assert(expression:, message:) ->
-      todo
+      doc.zero_width_string("") // TODO
   }
 }
 
 /// Pretty print a "use pattern" (anything that could go in a `use` pattern match branch)
 fn pretty_use_pattern(use_pattern: UsePattern) -> Document {
-  todo
+  let UsePattern(pattern:, annotation: _) = use_pattern // TODO `annotation`
+  pretty_pattern(pattern)
 }
 
 /// Pretty print a "pattern" (anything that could go in a pattern match branch)
