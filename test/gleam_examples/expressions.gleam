@@ -19,6 +19,8 @@ fn foo() {
   todo
   todo as "Some message"
   echo "Some message"
+  assert True
+  assert True as "Some message"
   "Some message" |> echo
   #(1, "text", True, x)
   #(
