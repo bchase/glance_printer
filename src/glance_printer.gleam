@@ -751,19 +751,36 @@ fn pretty_variant(variant: Variant) -> Document {
   //   UnlabelledVariantField(item: Type)
   // }
 
-  let Variant(name:, fields:, attributes: _) = variant // TODO `attributes`
-  fields
-  |> list.map(fn(field) {
-    case field {
-      LabelledVariantField(item: type_, label: label) ->
-        doc.from_string(label <> ": ")
-        |> doc.append(pretty_type(type_))
+  let Variant(name:, fields:, attributes:) = variant
 
-      UnlabelledVariantField(item: type_) -> pretty_type(type_)
+  let var =
+    fields
+    |> list.map(fn(field) {
+      case field {
+        LabelledVariantField(item: type_, label: label) ->
+          doc.from_string(label <> ": ")
+          |> doc.append(pretty_type(type_))
+
+        UnlabelledVariantField(item: type_) -> pretty_type(type_)
+      }
+    })
+    |> comma_separated_in_parentheses
+    |> doc.prepend(doc.from_string(name))
+
+  let attrs =
+    case attributes |> list.map(pretty_attribute) {
+      [] ->
+        []
+
+      attrs ->
+        attrs
+        |> list.intersperse(doc.break("", ""))
+        |> list.append([doc.break("", "")])
     }
-  })
-  |> comma_separated_in_parentheses
-  |> doc.prepend(doc.from_string(name))
+
+  list.append(attrs, [var])
+  |> doc.concat
+  |> doc.force_break
 }
 
 fn pretty_field(field: Field(a), a_to_doc: fn(a) -> Document) -> Document {
