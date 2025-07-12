@@ -4,23 +4,24 @@ import glance.{
   type BitStringSegmentOption, type Constant, type CustomType, type Definition,
   type Expression, type Field, type FnParameter, type Function,
   type FunctionParameter, type Import, type Module, type Pattern, type Publicity,
-  type Statement, type Type, type TypeAlias, type UsePattern, type Variant, AddFloat, AddInt, And,
-  Assert, Assignment, Attribute, BigOption, BinaryOperator, BitString,
-  BitsOption, Block, BytesOption, Call, Case, Clause, Concatenate, Constant,
-  CustomType, Definition, Discarded, DivFloat, DivInt, Echo, Eq, Expression,
-  FieldAccess, Float, FloatOption, Fn, FnCapture, FnParameter, Function,
-  FunctionParameter, FunctionType, GtEqFloat, GtEqInt, GtFloat, GtInt, Import,
-  Int, IntOption, LabelledField, LabelledVariantField, Let, LetAssert, LittleOption,
-  LtEqFloat, LtEqInt, LtFloat, LtInt, Module, MultFloat, MultInt, Named,
-  NamedType, NativeOption, NegateBool, NegateInt, NotEq, Or, Panic,
-  PatternAssignment, PatternBitString, PatternConcatenate,
+  type Statement, type Type, type TypeAlias, type UsePattern, type Variant,
+  AddFloat, AddInt, And, Assert, Assignment, Attribute, BigOption,
+  BinaryOperator, BitString, BitsOption, Block, BytesOption, Call, Case, Clause,
+  Concatenate, Constant, CustomType, Definition, Discarded, DivFloat, DivInt,
+  Echo, Eq, Expression, FieldAccess, Float, FloatOption, Fn, FnCapture,
+  FnParameter, Function, FunctionParameter, FunctionType, GtEqFloat, GtEqInt,
+  GtFloat, GtInt, Import, Int, IntOption, LabelledField, LabelledVariantField,
+  Let, LetAssert, LittleOption, LtEqFloat, LtEqInt, LtFloat, LtInt, Module,
+  MultFloat, MultInt, Named, NamedType, NativeOption, NegateBool, NegateInt,
+  NotEq, Or, Panic, PatternAssignment, PatternBitString, PatternConcatenate,
   PatternDiscard, PatternFloat, PatternInt, PatternList, PatternString,
-  PatternTuple, PatternVariable, PatternVariant, Pipe, Private, Public, RecordUpdate,
-  RecordUpdateField, RemainderInt, ShorthandField, SignedOption, SizeOption,
-  SizeValueOption, String, SubFloat, SubInt, Todo, Tuple, TupleIndex, TupleType,
-  TypeAlias, UnitOption, UnlabelledField, UnlabelledVariantField, UnsignedOption,
-  Use, UsePattern, Utf16CodepointOption, Utf16Option, Utf32CodepointOption, Utf32Option,
-  Utf8CodepointOption, Utf8Option, Variable, VariableType, Variant,
+  PatternTuple, PatternVariable, PatternVariant, Pipe, Private, Public,
+  RecordUpdate, RecordUpdateField, RemainderInt, ShorthandField, SignedOption,
+  SizeOption, SizeValueOption, String, SubFloat, SubInt, Todo, Tuple, TupleIndex,
+  TupleType, TypeAlias, UnitOption, UnlabelledField, UnlabelledVariantField,
+  UnsignedOption, Use, UsePattern, Utf16CodepointOption, Utf16Option,
+  Utf32CodepointOption, Utf32Option, Utf8CodepointOption, Utf8Option, Variable,
+  VariableType, Variant,
 }
 import glance_printer/internal/doc_extras.{
   comma_separated_in_parentheses, nbsp, nest, trailing_comma,
@@ -167,10 +168,7 @@ fn pretty_statement(statement: Statement) -> Document {
           |> doc.concat
 
         None ->
-          [
-            doc.from_string("assert "),
-            pretty_expression(expression),
-          ]
+          [doc.from_string("assert "), pretty_expression(expression)]
           |> doc.concat
       }
     }
@@ -181,10 +179,7 @@ fn pretty_statement(statement: Statement) -> Document {
 fn pretty_use_pattern(use_pattern: UsePattern) -> Document {
   let UsePattern(pattern:, annotation:) = use_pattern
 
-  [
-    pretty_pattern(pattern),
-    pretty_type_annotation(annotation),
-  ]
+  [pretty_pattern(pattern), pretty_type_annotation(annotation)]
   |> doc.concat
 }
 
@@ -192,8 +187,9 @@ fn pretty_use_pattern(use_pattern: UsePattern) -> Document {
 fn pretty_pattern(pattern: Pattern) -> Document {
   case pattern {
     // Basic patterns
-    PatternInt(value:, location: _) | PatternFloat(value:, location: _) | PatternVariable(name: value, location: _) ->
-      doc.from_string(value)
+    PatternInt(value:, location: _)
+    | PatternFloat(value:, location: _)
+    | PatternVariable(name: value, location: _) -> doc.from_string(value)
 
     PatternString(value:, location: _) -> doc.from_string("\"" <> value <> "\"")
 
@@ -231,7 +227,8 @@ fn pretty_pattern(pattern: Pattern) -> Document {
       |> doc.concat
     }
 
-    PatternBitString(segments:, location: _) -> pretty_bitstring(segments, pretty_pattern)
+    PatternBitString(segments:, location: _) ->
+      pretty_bitstring(segments, pretty_pattern)
 
     PatternVariant(module:, constructor:, arguments:, with_spread:, location: _) -> {
       let module =
@@ -325,7 +322,9 @@ fn pretty_list(
 fn pretty_expression(expression: Expression) -> Document {
   case expression {
     // Int, Float and Variable simply print as their string value
-    Int(value:, location: _) | Float(value:, location: _) | Variable(name: value, location: _) -> doc.from_string(value)
+    Int(value:, location: _)
+    | Float(value:, location: _)
+    | Variable(name: value, location: _) -> doc.from_string(value)
 
     // A string literal needs to bee wrapped in quotes
     String(value:, location: _) -> doc.from_string("\"" <> value <> "\"")
@@ -375,7 +374,8 @@ fn pretty_expression(expression: Expression) -> Document {
       )
 
     // Pretty print a function
-    Fn(arguments:, return_annotation: return, body:, location: _) -> pretty_fn(arguments, return, body)
+    Fn(arguments:, return_annotation: return, body:, location: _) ->
+      pretty_fn(arguments, return, body)
 
     // Pretty print a record update expression
     RecordUpdate(module:, constructor:, record:, fields:, location: _) -> {
@@ -425,7 +425,13 @@ fn pretty_expression(expression: Expression) -> Document {
       |> doc.concat
     }
 
-    FnCapture(label:, function:, arguments_before:, arguments_after:, location: _) -> {
+    FnCapture(
+      label:,
+      function:,
+      arguments_before:,
+      arguments_after:,
+      location: _,
+    ) -> {
       let arguments_before =
         list.map(arguments_before, pretty_field(_, pretty_expression))
       let arguments_after =
@@ -443,7 +449,8 @@ fn pretty_expression(expression: Expression) -> Document {
       [pretty_expression(function), in_parens]
       |> doc.concat
     }
-    BitString(segments:, location: _) -> pretty_bitstring(segments, pretty_expression)
+    BitString(segments:, location: _) ->
+      pretty_bitstring(segments, pretty_expression)
     Case(subjects:, clauses:, location: _) -> {
       let subjects =
         subjects
@@ -495,14 +502,10 @@ fn pretty_expression(expression: Expression) -> Document {
     }
     Echo(expression:, location: _) -> {
       case expression {
-        None ->
-          doc.from_string("echo")
+        None -> doc.from_string("echo")
 
         Some(expression) ->
-          [
-            doc.from_string("echo "),
-            pretty_expression(expression),
-          ]
+          [doc.from_string("echo "), pretty_expression(expression)]
           |> doc.concat
       }
     }
@@ -701,9 +704,9 @@ fn pretty_type(type_: Type) -> Document {
 }
 
 fn pretty_custom_type(type_: Definition(CustomType)) -> Document {
-  use CustomType(name:, publicity:, opaque_:, parameters:, variants:, location: _) <- pretty_definition(
-    type_,
-  )
+  use
+    CustomType(name:, publicity:, opaque_:, parameters:, variants:, location: _)
+  <- pretty_definition(type_)
 
   // Opaque or not
   let opaque_ = case opaque_ {
@@ -767,16 +770,14 @@ fn pretty_variant(variant: Variant) -> Document {
     |> comma_separated_in_parentheses
     |> doc.prepend(doc.from_string(name))
 
-  let attrs =
-    case attributes |> list.map(pretty_attribute) {
-      [] ->
-        []
+  let attrs = case attributes |> list.map(pretty_attribute) {
+    [] -> []
 
-      attrs ->
-        attrs
-        |> list.intersperse(doc.break("", ""))
-        |> list.append([doc.break("", "")])
-    }
+    attrs ->
+      attrs
+      |> list.intersperse(doc.break("", ""))
+      |> list.append([doc.break("", "")])
+  }
 
   list.append(attrs, [var])
   |> doc.concat
@@ -799,9 +800,15 @@ fn pretty_field(field: Field(a), a_to_doc: fn(a) -> Document) -> Document {
 
 // Pretty print an import statement
 fn pretty_import(import_: Definition(Import)) -> Document {
-  use Import(module:, alias:, unqualified_types:, unqualified_values:, location: _) <- pretty_definition(
-    import_,
-  )
+  use
+    Import(
+      module:,
+      alias:,
+      unqualified_types:,
+      unqualified_values:,
+      location: _,
+    )
+  <- pretty_definition(import_)
 
   let unqualified_values =
     unqualified_values

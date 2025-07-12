@@ -1,5 +1,5 @@
-import gleam/list
 import gleam/bit_array
+import gleam/list
 
 const x = 5
 
