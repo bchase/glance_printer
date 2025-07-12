@@ -4,13 +4,13 @@ import glance.{
   type BitStringSegmentOption, type Constant, type CustomType, type Definition,
   type Expression, type Field, type FnParameter, type Function,
   type FunctionParameter, type Import, type Module, type Pattern, type Publicity,
-  type Statement, type Type, type TypeAlias, type Variant, AddFloat, AddInt, And,
+  type Statement, type Type, type TypeAlias, type UsePattern, type Variant, AddFloat, AddInt, And,
   Assert, Assignment, Attribute, BigOption, BinaryOperator, BitString,
   BitsOption, Block, BytesOption, Call, Case, Clause, Concatenate, Constant,
-  CustomType, Definition, Discarded, DivFloat, DivInt, Eq, Expression,
+  CustomType, Definition, Discarded, DivFloat, DivInt, Echo, Eq, Expression,
   FieldAccess, Float, FloatOption, Fn, FnCapture, FnParameter, Function,
   FunctionParameter, FunctionType, GtEqFloat, GtEqInt, GtFloat, GtInt, Import,
-  Int, IntOption, LabelledField, LabelledVariantField, Let, LittleOption,
+  Int, IntOption, LabelledField, LabelledVariantField, Let, LetAssert, LittleOption,
   LtEqFloat, LtEqInt, LtFloat, LtInt, Module, MultFloat, MultInt, Named,
   NamedType, NativeOption, NegateBool, NegateInt, NotEq, Or, Panic,
   PatternAssignment, PatternBitString, PatternConcatenate, PatternConstructor,
@@ -19,7 +19,7 @@ import glance.{
   RecordUpdateField, RemainderInt, ShorthandField, SignedOption, SizeOption,
   SizeValueOption, String, SubFloat, SubInt, Todo, Tuple, TupleIndex, TupleType,
   TypeAlias, UnitOption, UnlabelledField, UnlabelledVariantField, UnsignedOption,
-  Use, Utf16CodepointOption, Utf16Option, Utf32CodepointOption, Utf32Option,
+  Use, UsePattern, Utf16CodepointOption, Utf16Option, Utf32CodepointOption, Utf32Option,
   Utf8CodepointOption, Utf8Option, Variable, VariableType, Variant,
 }
 import glance_printer/internal/doc_extras.{
@@ -83,7 +83,7 @@ fn pretty_attribute(attribute: Attribute) -> Document {
 
 /// Pretty print a top level function.
 fn pretty_function(function: Definition(Function)) -> Document {
-  use Function(name, publicity, parameters, return, statements, _) <- pretty_definition(
+  use Function(name:, publicity:, parameters:, return:, body:, location: _) <- pretty_definition(
     function,
   )
 
@@ -92,10 +92,10 @@ fn pretty_function(function: Definition(Function)) -> Document {
     |> list.map(pretty_function_parameter)
     |> comma_separated_in_parentheses
 
-  let statements = case statements {
+  let statements = case body {
     [] -> doc.empty
     _ ->
-      [nbsp(), pretty_block(of: statements)]
+      [nbsp(), pretty_block(of: body)]
       |> doc.concat
   }
 
@@ -129,7 +129,7 @@ fn pretty_statement(statement: Statement) -> Document {
     Assignment(kind, pattern, annotation, value) -> {
       let let_declaration = case kind {
         Let -> doc.from_string("let ")
-        Assert -> doc.from_string("let assert ")
+        LetAssert(..) -> doc.from_string("let assert ")
       }
 
       [
@@ -144,7 +144,7 @@ fn pretty_statement(statement: Statement) -> Document {
     Use(patterns, function) -> {
       let patterns =
         patterns
-        |> list.map(pretty_pattern)
+        |> list.map(pretty_use_pattern)
         |> doc.join(with: doc.from_string(", "))
 
       [
@@ -155,7 +155,14 @@ fn pretty_statement(statement: Statement) -> Document {
       ]
       |> doc.concat
     }
+    Assert(expression:, message:) ->
+      todo
   }
+}
+
+/// Pretty print a "use pattern" (anything that could go in a `use` pattern match branch)
+fn pretty_use_pattern(use_pattern: UsePattern) -> Document {
+  todo
 }
 
 /// Pretty print a "pattern" (anything that could go in a pattern match branch)
@@ -463,6 +470,9 @@ fn pretty_expression(expression: Expression) -> Document {
       ]
       |> doc.concat
     }
+
+    Echo(expression:) ->
+      todo
   }
 }
 
@@ -597,7 +607,7 @@ fn pretty_fn_parameter(fn_parameter: FnParameter) -> Document {
 // Type Alias -------------------------------------
 
 fn pretty_type_alias(type_alias: Definition(TypeAlias)) -> Document {
-  use TypeAlias(name, publicity, parameters, aliased) <- pretty_definition(
+  use TypeAlias(name:, publicity:, parameters:, aliased:, location: _) <- pretty_definition(
     type_alias,
   )
 
@@ -623,7 +633,7 @@ fn pretty_type_alias(type_alias: Definition(TypeAlias)) -> Document {
 
 fn pretty_type(type_: Type) -> Document {
   case type_ {
-    NamedType(name, module, parameters) -> {
+    NamedType(name:, module:, parameters:, location: _) -> {
       let parameters = case parameters {
         [] -> doc.empty
         _ ->
@@ -639,11 +649,11 @@ fn pretty_type(type_: Type) -> Document {
       |> doc.append(doc.from_string(name))
       |> doc.append(parameters)
     }
-    TupleType(elements) ->
+    TupleType(elements:, location: _) ->
       elements
       |> list.map(pretty_type)
       |> pretty_tuple
-    FunctionType(parameters, return) -> {
+    FunctionType(parameters:, return:, location: _) -> {
       doc.from_string("fn")
       |> doc.append(
         parameters
@@ -652,13 +662,13 @@ fn pretty_type(type_: Type) -> Document {
       )
       |> doc.append(pretty_return_signature(Some(return)))
     }
-    VariableType(name) -> doc.from_string(name)
-    glance.HoleType(name) -> doc.from_string(name)
+    VariableType(name:, location: _) -> doc.from_string(name)
+    glance.HoleType(name:, location: _) -> doc.from_string(name)
   }
 }
 
 fn pretty_custom_type(type_: Definition(CustomType)) -> Document {
-  use CustomType(name, publicity, opaque_, parameters, variants) <- pretty_definition(
+  use CustomType(name:, publicity:, opaque_:, parameters:, variants:, location: _) <- pretty_definition(
     type_,
   )
 
@@ -708,7 +718,7 @@ fn pretty_variant(variant: Variant) -> Document {
   //   UnlabelledVariantField(item: Type)
   // }
 
-  let Variant(name, fields) = variant
+  let Variant(name:, fields:, ..) = variant // TODO `attributes`
   fields
   |> list.map(fn(field) {
     case field {
@@ -739,7 +749,7 @@ fn pretty_field(field: Field(a), a_to_doc: fn(a) -> Document) -> Document {
 
 // Pretty print an import statement
 fn pretty_import(import_: Definition(Import)) -> Document {
-  use Import(module, alias, unqualified_types, unqualified_values) <- pretty_definition(
+  use Import(module:, alias:, unqualified_types:, unqualified_values:, location: _) <- pretty_definition(
     import_,
   )
 
