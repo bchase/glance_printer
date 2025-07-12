@@ -183,7 +183,7 @@ fn pretty_use_pattern(use_pattern: UsePattern) -> Document {
 
   [
     pretty_pattern(pattern),
-    pretty_type_annotation(annotation), // TODO test?
+    pretty_type_annotation(annotation),
   ]
   |> doc.concat
 }
@@ -493,12 +493,14 @@ fn pretty_expression(expression: Expression) -> Document {
       ]
       |> doc.concat
     }
-    Echo(expression:, location: _) -> { // TODO test
+    Echo(expression:, location: _) -> {
       case expression {
-        None -> doc.from_string("echo")
+        None ->
+          doc.from_string("echo")
+
         Some(expression) ->
           [
-            doc.from_string("echo"),
+            doc.from_string("echo "),
             pretty_expression(expression),
           ]
           |> doc.concat

@@ -18,6 +18,8 @@ fn foo() {
   panic as "Some message"
   todo
   todo as "Some message"
+  echo "Some message"
+  "Some message" |> echo
   #(1, "text", True, x)
   #(
     1,
